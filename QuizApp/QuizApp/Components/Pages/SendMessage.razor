@@ -1,0 +1,22 @@
+﻿@page "/SendMessage"
+@rendermode InteractiveServer
+
+<h3>SendMessage</h3>
+<label for="userNameInput">UserName</label>
+<InputText @bind-Value="userName" id="userNameInput"></InputText>
+<br>
+<label for="messageInput">Message</label>
+<InputText @bind-Value="message" id="messageInput"></InputText>
+<br>
+<button @onclick="SendMessageTest">SendMessage</button>
+
+
+@code {
+    private string userName = string.Empty;
+    private string message = string.Empty;
+    void SendMessageTest()
+    {
+        userName = userName + "1";
+    }
+
+}
