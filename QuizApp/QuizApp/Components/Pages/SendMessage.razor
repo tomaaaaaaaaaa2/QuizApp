@@ -1,4 +1,5 @@
 ﻿@page "/SendMessage"
+@using Microsoft.AspNetCore.SignalR.Client
 @rendermode InteractiveServer
 
 <h3>SendMessage</h3>
@@ -8,15 +9,33 @@
 <label for="messageInput">Message</label>
 <InputText @bind-Value="message" id="messageInput"></InputText>
 <br>
-<button @onclick="SendMessageTest">SendMessage</button>
+<button @onclick="SendMessageAsync">SendMessage</button>
 
 
 @code {
     private string userName = string.Empty;
     private string message = string.Empty;
-    void SendMessageTest()
+
+    private HubConnection? connection;
+
+    protected override async Task OnInitializedAsync()
     {
-        userName = userName + "1";
+        connection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/messagehub"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        await connection.StartAsync();
     }
 
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    private async Task SendMessageAsync()
+    {
+        if (connection is not null)
+        {
+            await connection.InvokeAsync("SendMessage", userName, message);
+            message = string.Empty; // 入力欄クリア
+        }
+    }
 }
