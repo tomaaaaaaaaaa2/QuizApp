@@ -7,6 +7,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddSignalR();
 
+builder.Services.AddSingleton<QuizApp.Components.Logic.QuestionManager>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -1,0 +1,93 @@
+﻿@page "/admin"
+@rendermode InteractiveServer
+@using QuizApp.Components.Logic
+@using QuizApp.Components.Model
+
+@inject QuestionManager QuestionManager
+
+<PageTitle>Admin</PageTitle>
+
+<h3>管理者ページ</h3>
+
+<div>
+    @* 問題追加フォーム *@    
+    <div>
+        <h4>問題追加</h4>
+        <div>
+            <lable>問題文：</lable>
+            <input type="text" class="form-control" @bind="_questionText"/>
+        </div>
+
+        <div>
+            <lable>スコア：</lable>
+            <input type="number" class="form-control" @bind="_score" />
+        </div>
+
+        <div>
+            <lable>問題タイプ：</lable>
+            <select type="number" class="form-control" @bind="_questionType">
+                <option value="Choice">選択式</option>
+                <option value="Text">記述式</option>
+            </select>
+        </div>
+
+        @if(_questionType == QuestionType.Text){
+            <div>
+                <lable>正解：</lable>
+                <input type="text" class="form-control" @bind="_correctText"></input>
+            </div>
+        }
+        else if(_questionType == QuestionType.Choice){
+            <div>
+                <lable>選択肢：</lable>
+                <InputRadioGroup @bind-Value="_correctIndex">
+                    @foreach(var choice in _choice.Select((c,i)=>new { c,i})){
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">
+                                <InputRadio class="form-check-input mt-0" Value="choice.i" />
+                            </span>
+                            <input type="text" class="form-control" @bind="_choice[choice.i]"/>
+                            <button class="btn btn-danger" @onclick="()=>_choice.RemoveAt(choice.i)">削除</button>
+                        </div>
+                    }
+                </InputRadioGroup>
+
+                <button class="btn btn-outline-secondary" @onclick="()=>_choice.Add(string.Empty)">選択肢追加</button>
+            </div>
+        }
+        <button class="btn btn-primary" @onclick="AddQuestion">問題追加</button>
+    </div>
+</div>
+
+
+@code {
+    private string _questionText = string.Empty;
+    private int _score = 10;
+    private QuestionType _questionType;
+    private string _correctText = string.Empty;
+    private int _correctIndex = -1;
+    private List<string> _choice = new List<string>();
+
+    private void AddQuestion(MouseEventArgs e)
+    {
+        Question newquestion = _questionType switch
+        {
+            QuestionType.Choice => new ChoiceQuestion
+                {
+                    Text = _questionText,
+                    Score = _score,
+                    CorrectOptionIndex = _correctIndex,
+                    Options = _choice
+                },
+            QuestionType.Text => new TextQuestion
+                {
+                    Text = _questionText,
+                    Score = _score,
+                    CorrectAnswer = _correctText
+                },
+            _ => throw new InvalidOperationException("不明な質問タイプです。")
+        };
+
+        QuestionManager.AddQuestion(newquestion);
+    }
+}
