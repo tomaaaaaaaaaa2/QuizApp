@@ -52,7 +52,7 @@
                     }
                 </InputRadioGroup>
 
-                <button class="btn btn-secondary btn-sm" @onclick="()=>_choice.Add(string.Empty)">選択肢追加</button>
+                <button class="btn btn-sm btn-secondary" @onclick="()=>_choice.Add(string.Empty)">選択肢追加</button>
             </div>
         }
         <button class="btn btn-primary" @onclick="AddQuestion">問題追加</button>
@@ -77,6 +77,8 @@
 						<label>タイプ: 選択式, </label>
 						<label>選択肢：@string.Join(",", @choiceQuestion.Options), 正解：@choiceQuestion.CorrectOptionIndex</label>
 					}
+
+                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteQuestion(question)">削除</button>
 				</li>
 			}
 		</ul>
@@ -92,6 +94,17 @@
     private string _correctText = string.Empty;
     private int _correctIndex = -1;
     private List<string> _choice = new List<string>();
+
+    // 初期化(複数のブラウザに通知するため)
+    protected override void OnInitialized()
+    {
+        QuestionManager.OnChange += () => InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        QuestionManager.OnChange -= () => InvokeAsync(StateHasChanged);
+    }
 
     private void AddQuestion(MouseEventArgs e)
     {
@@ -115,6 +128,11 @@
 
         QuestionManager.AddQuestion(newquestion);
         ResetForm();
+    }
+
+    private void DeleteQuestion(Question q)
+    {
+        QuestionManager.DeleteQuestion(q);
     }
 
     private void ResetForm()
