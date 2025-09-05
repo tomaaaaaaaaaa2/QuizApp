@@ -38,7 +38,7 @@
             </div>
         }
         else if(_questionType == QuestionType.Choice){
-            <div>
+            <div class="mb-2">
                 <lable>選択肢：</lable>
                 <InputRadioGroup @bind-Value="_correctIndex">
                     @foreach(var choice in _choice.Select((c,i)=>new { c,i})){
@@ -47,16 +47,41 @@
                                 <InputRadio class="form-check-input mt-0" Value="choice.i" />
                             </span>
                             <input type="text" class="form-control" @bind="_choice[choice.i]"/>
-                            <button class="btn btn-danger" @onclick="()=>_choice.RemoveAt(choice.i)">削除</button>
+                            <button class="btn btn-danger btn-sm" @onclick="()=>_choice.RemoveAt(choice.i)">削除</button>
                         </div>
                     }
                 </InputRadioGroup>
 
-                <button class="btn btn-outline-secondary" @onclick="()=>_choice.Add(string.Empty)">選択肢追加</button>
+                <button class="btn btn-secondary btn-sm" @onclick="()=>_choice.Add(string.Empty)">選択肢追加</button>
             </div>
         }
         <button class="btn btn-primary" @onclick="AddQuestion">問題追加</button>
     </div>
+
+    @* 問題追加リスト *@
+	<div>
+		<h4>作成済み問題</h4>
+		<ul>
+			@foreach(var question in QuestionManager.Questions)
+			{
+				<li>
+					<label>問題: @question.Text, 点数: @question.Score, </label>
+
+					@if(question is TextQuestion textQuestion)
+					{
+						<label>タイプ: 記述式, </label>
+						<label>正解: @textQuestion.CorrectAnswer</label>
+					}
+					else if(question is ChoiceQuestion choiceQuestion)
+					{
+						<label>タイプ: 選択式, </label>
+						<label>選択肢：@string.Join(",", @choiceQuestion.Options), 正解：@choiceQuestion.CorrectOptionIndex</label>
+					}
+				</li>
+			}
+		</ul>
+
+	</div>
 </div>
 
 
@@ -89,5 +114,16 @@
         };
 
         QuestionManager.AddQuestion(newquestion);
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        _questionText = string.Empty;
+        _score = 10;
+        _questionType = QuestionType.Choice;
+        _correctText = string.Empty;
+        _correctIndex = -1;
+        _choice = new List<string>();
     }
 }

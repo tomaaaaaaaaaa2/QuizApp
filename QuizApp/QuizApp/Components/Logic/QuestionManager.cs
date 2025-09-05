@@ -4,11 +4,11 @@ namespace QuizApp.Components.Logic
 {
     public class QuestionManager
     {
-        private List<Question> _questions = new();
+        public List<Question> Questions { get; } = new();
 
         public void AddQuestion(Question question)
         {
-            _questions.Add(question);
+            Questions.Add(question);
         }
     }
 }
