@@ -1,6 +1,6 @@
 using QuizApp.Components;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -8,8 +8,9 @@ builder.Services.AddRazorComponents()
 builder.Services.AddSignalR();
 
 builder.Services.AddSingleton<QuizApp.Components.Logic.QuestionManager>();
+builder.Services.AddSingleton<QuizApp.Components.Logic.RoomManager>();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

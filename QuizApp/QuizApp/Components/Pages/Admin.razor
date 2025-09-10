@@ -4,6 +4,8 @@
 @using QuizApp.Components.Model
 
 @inject QuestionManager QuestionManager
+@inject RoomManager RoomManager
+
 
 <PageTitle>Admin</PageTitle>
 
@@ -15,7 +17,7 @@
         <h4>問題追加</h4>
         <div>
             <lable>問題文：</lable>
-            <input type="text" class="form-control" @bind="_questionText"/>
+            <input type="text" class="form-control" @bind="_questionText" />
         </div>
 
         <div>
@@ -31,59 +33,96 @@
             </select>
         </div>
 
-        @if(_questionType == QuestionType.Text){
+        @if (_questionType == QuestionType.Text)
+        {
             <div>
                 <lable>正解：</lable>
                 <input type="text" class="form-control" @bind="_correctText"></input>
             </div>
         }
-        else if(_questionType == QuestionType.Choice){
+        else if (_questionType == QuestionType.Choice)
+        {
             <div class="mb-2">
                 <lable>選択肢：</lable>
                 <InputRadioGroup @bind-Value="_correctIndex">
-                    @foreach(var choice in _choice.Select((c,i)=>new { c,i})){
+                    @foreach (var choice in _choice.Select((c, i) => new { c, i }))
+                    {
                         <div class="input-group mb-3">
                             <span class="input-group-text">
                                 <InputRadio class="form-check-input mt-0" Value="choice.i" />
                             </span>
-                            <input type="text" class="form-control" @bind="_choice[choice.i]"/>
-                            <button class="btn btn-danger btn-sm" @onclick="()=>_choice.RemoveAt(choice.i)">削除</button>
+                            <input type="text" class="form-control" @bind="_choice[choice.i]" />
+                            <button class="btn btn-danger btn-sm" @onclick="() => _choice.RemoveAt(choice.i)">削除</button>
                         </div>
                     }
                 </InputRadioGroup>
 
-                <button class="btn btn-sm btn-secondary" @onclick="()=>_choice.Add(string.Empty)">選択肢追加</button>
+                <button class="btn btn-sm btn-secondary" @onclick="() => _choice.Add(string.Empty)">選択肢追加</button>
             </div>
         }
         <button class="btn btn-primary" @onclick="AddQuestion">問題追加</button>
     </div>
 
     @* 問題追加リスト *@
-	<div>
-		<h4>作成済み問題</h4>
-		<ul>
-			@foreach(var question in QuestionManager.Questions)
-			{
-				<li>
-					<label>問題: @question.Text, 点数: @question.Score, </label>
+    <div>
+        <h4>作成済み問題</h4>
+        <ul>
+            @foreach (var question in QuestionManager.Questions)
+            {
+                <li>
+                    <label>問題: @question.Text, 点数: @question.Score, </label>
 
-					@if(question is TextQuestion textQuestion)
-					{
-						<label>タイプ: 記述式, </label>
-						<label>正解: @textQuestion.CorrectAnswer</label>
-					}
-					else if(question is ChoiceQuestion choiceQuestion)
-					{
-						<label>タイプ: 選択式, </label>
-						<label>選択肢：@string.Join(",", @choiceQuestion.Options), 正解：@choiceQuestion.CorrectOptionIndex</label>
-					}
+                    @if (question is TextQuestion textQuestion)
+                    {
+                        <label>タイプ: 記述式, </label>
+                        <label>正解: @textQuestion.CorrectAnswer</label>
+                    }
+                    else if (question is ChoiceQuestion choiceQuestion)
+                    {
+                        <label>タイプ: 選択式, </label>
+                        <label>選択肢：@string.Join(",", @choiceQuestion.Options), 正解：@choiceQuestion.CorrectOptionIndex</label>
+                    }
 
                     <button class="btn btn-sm btn-danger" @onclick="() => DeleteQuestion(question)">削除</button>
-				</li>
-			}
-		</ul>
+                </li>
+            }
+        </ul>
 
-	</div>
+    </div>
+
+    <hr>
+    @* ルーム追加 *@
+    <div>
+        <h4>ルーム追加</h4>
+        <div>
+            <label>ルーム名：</label>
+            <input type="text" class="form-control" @bind="_roomName" />
+        </div>
+        <button class="btn btn-primary" @onclick="AddRoom">ルーム追加</button>
+        <ErrorDialog IsVisible="@showError" Message="@errorMessage" OnClose="@HideError" />
+    </div>
+    @*     <script>
+
+        window.showError = function (message) {
+            alert(message);
+        }
+    </script> *@
+    <div>
+        <h4>作成済みルーム</h4>
+        <ul>
+            @foreach (var room in RoomManager.Rooms)
+            {
+                <li>
+                    <label>ID: @room.ID, 名前: @room.RoomName, 問題数：@room.QuestionList[0].Text</label>
+
+
+
+                    @*  <button class="btn btn-sm btn-danger" @onclick="() => DeleteQuestion(room)">削除</button> *@
+                </li>
+            }
+        </ul>
+
+    </div>
 </div>
 
 
@@ -94,6 +133,22 @@
     private string _correctText = string.Empty;
     private int _correctIndex = -1;
     private List<string> _choice = new List<string>();
+    private string _roomName = string.Empty;
+
+    bool showError = false;  
+    string errorMessage = "";  
+
+    void HandleError()  
+    {  
+        errorMessage = "サーバーとの通信でエラーが発生しました。";  
+        showError = true;  
+    }  
+
+    void HideError()  
+    {  
+        showError = false;  
+    }  
+
 
     // 初期化(複数のブラウザに通知するため)
     protected override void OnInitialized()
@@ -111,23 +166,41 @@
         Question newquestion = _questionType switch
         {
             QuestionType.Choice => new ChoiceQuestion
-                {
-                    Text = _questionText,
-                    Score = _score,
-                    CorrectOptionIndex = _correctIndex,
-                    Options = _choice
-                },
+            {
+                Text = _questionText,
+                Score = _score,
+                CorrectOptionIndex = _correctIndex,
+                Options = _choice
+            },
             QuestionType.Text => new TextQuestion
-                {
-                    Text = _questionText,
-                    Score = _score,
-                    CorrectAnswer = _correctText
-                },
+            {
+                Text = _questionText,
+                Score = _score,
+                CorrectAnswer = _correctText
+            },
             _ => throw new InvalidOperationException("不明な質問タイプです。")
         };
 
         QuestionManager.AddQuestion(newquestion);
         ResetForm();
+    }
+
+
+
+
+    private void AddRoom(MouseEventArgs e)
+    {
+        if (QuestionManager.Questions.Count < 1 || QuestionManager.Questions is null)
+        {
+            HandleError();
+
+        }
+        else
+        {
+            List<Question> questions = new List<Question>(QuestionManager.Questions);
+            RoomManager.AddRoom(new Room(_roomName, questions));
+            QuestionManager.ClearQuestions();
+        }
     }
 
     private void DeleteQuestion(Question q)

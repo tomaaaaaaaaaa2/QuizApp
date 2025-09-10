@@ -20,6 +20,12 @@ namespace QuizApp.Components.Logic
             NotifyStateChanged();
         }
 
+        public void ClearQuestions()
+        {
+            Questions.Clear();
+            NotifyStateChanged();
+        }
+
         private void NotifyStateChanged() => OnChange?.Invoke();
 
     }
