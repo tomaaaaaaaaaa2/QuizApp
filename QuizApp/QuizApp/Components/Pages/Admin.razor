@@ -99,25 +99,17 @@
             <input type="text" class="form-control" @bind="_roomName" />
         </div>
         <button class="btn btn-primary" @onclick="AddRoom">ルーム追加</button>
-        <ErrorDialog IsVisible="@showError" Message="@errorMessage" OnClose="@HideError" />
+        <ErrorDialog IsVisible="@_errorDisplayFlg" Message="@_errorMessage" OnClose="@HideError" />
     </div>
-    @*     <script>
-
-        window.showError = function (message) {
-            alert(message);
-        }
-    </script> *@
+    @* ルームリスト *@
     <div>
         <h4>作成済みルーム</h4>
         <ul>
             @foreach (var room in RoomManager.Rooms)
             {
                 <li>
-                    <label>ID: @room.ID, 名前: @room.RoomName, 問題数：@room.QuestionList[0].Text</label>
-
-
-
-                    @*  <button class="btn btn-sm btn-danger" @onclick="() => DeleteQuestion(room)">削除</button> *@
+                    <label>ID: @room.ID, 名前: @room.RoomName, 問題数：@room.QuestionList.Count</label>
+                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteRoom(room)">削除</button>
                 </li>
             }
         </ul>
@@ -134,21 +126,8 @@
     private int _correctIndex = -1;
     private List<string> _choice = new List<string>();
     private string _roomName = string.Empty;
-
-    bool showError = false;  
-    string errorMessage = "";  
-
-    void HandleError()  
-    {  
-        errorMessage = "サーバーとの通信でエラーが発生しました。";  
-        showError = true;  
-    }  
-
-    void HideError()  
-    {  
-        showError = false;  
-    }  
-
+    private bool _errorDisplayFlg = false;
+    private string _errorMessage = "";
 
     // 初期化(複数のブラウザに通知するため)
     protected override void OnInitialized()
@@ -163,7 +142,7 @@
 
     private void AddQuestion(MouseEventArgs e)
     {
-        Question newquestion = _questionType switch
+        Question newQuestion = _questionType switch
         {
             QuestionType.Choice => new ChoiceQuestion
             {
@@ -181,31 +160,8 @@
             _ => throw new InvalidOperationException("不明な質問タイプです。")
         };
 
-        QuestionManager.AddQuestion(newquestion);
+        QuestionManager.AddQuestion(newQuestion);
         ResetForm();
-    }
-
-
-
-
-    private void AddRoom(MouseEventArgs e)
-    {
-        if (QuestionManager.Questions.Count < 1 || QuestionManager.Questions is null)
-        {
-            HandleError();
-
-        }
-        else
-        {
-            List<Question> questions = new List<Question>(QuestionManager.Questions);
-            RoomManager.AddRoom(new Room(_roomName, questions));
-            QuestionManager.ClearQuestions();
-        }
-    }
-
-    private void DeleteQuestion(Question q)
-    {
-        QuestionManager.DeleteQuestion(q);
     }
 
     private void ResetForm()
@@ -216,5 +172,40 @@
         _correctText = string.Empty;
         _correctIndex = -1;
         _choice = new List<string>();
+    }
+
+    private void DeleteQuestion(Question q)
+    {
+        QuestionManager.DeleteQuestion(q);
+    }
+
+    private void AddRoom(MouseEventArgs e)
+    {
+        if (QuestionManager.Questions.Count < 1 || QuestionManager.Questions is null)
+        {
+            HandleError();
+            return;
+        }
+        List<Question> questions = new List<Question>(QuestionManager.Questions);
+        RoomManager.AddRoom(new Room(_roomName, questions));
+
+        QuestionManager.ClearQuestions();
+        _roomName = string.Empty;
+    }
+
+    private void DeleteRoom(Room room)
+    {
+        RoomManager.DeleteRoom(room);
+    }
+
+    private void HandleError()
+    {
+        _errorMessage = "ルームを追加するには少なくとも1つ以上問題を登録してください。";
+        _errorDisplayFlg = true;
+    }
+
+    private void HideError()
+    {
+        _errorDisplayFlg = false;
     }
 }
