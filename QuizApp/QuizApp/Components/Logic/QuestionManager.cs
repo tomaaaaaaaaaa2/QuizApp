@@ -27,6 +27,5 @@ namespace QuizApp.Components.Logic
         }
 
         private void NotifyStateChanged() => OnChange?.Invoke();
-
     }
 }

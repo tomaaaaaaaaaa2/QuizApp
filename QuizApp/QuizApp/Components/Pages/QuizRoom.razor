@@ -1,0 +1,84 @@
+﻿@page "/rooms/{Id}"
+@using QuizApp.Components.Logic
+@using QuizApp.Components.Model
+
+@inject RoomManager RoomManager
+
+<PageTitle>クイズルーム</PageTitle>
+<h3>クイズルーム</h3>
+
+<p>ID: @ID</p>
+
+<ErrorDialog IsVisible="@_errorDisplayFlg" Message="@_errorMessage" OnClose="@HideError" />
+
+<div class="mb-3">
+    <label class="form-label">ニックネームを入力してください</label>
+    <InputText class="form-control" @bind-Value="_nickName"></InputText>
+</div>
+
+<hr>
+
+<EditForm Model="@_questions">
+    @for(var i = 0; i < _questions.Count; i++)
+    {
+        var q = _questions[i];
+        <div class="mb-3">
+            <label class="form-label">Q@(i + 1). @q.Text</label>
+
+            @if (q.Type == QuestionType.Text)
+            {
+                <InputText class="form-control" @bind-Value="@_answerA"/>
+            }
+            else if (q.Type == QuestionType.Choice)
+            {
+                <InputSelect class="form-select" @bind-Value="@_answerB">
+                <option value=" ">---- 選択してください ----</option>
+                @foreach (var option in ((ChoiceQuestion)q).Options)
+                {
+                    <option value="@option">@option</option>
+                }
+                </InputSelect>
+            }
+        </div>
+    }
+</EditForm>
+
+
+@code {
+    [Parameter]
+    public string ID { get; set; } = string.Empty;
+
+    private List<Question> _questions = new();
+    private string _nickName = string.Empty;
+    private bool _errorDisplayFlg = false;
+    private string _errorMessage = string.Empty;
+    
+    //このままではNG: answerクラスのプロパティにバインドする必要あり
+    private string _answerA = string.Empty;
+    private string _answerB = string.Empty;
+
+    private List<Question> GetQuestions(string roomId)
+    {
+        try
+        {
+            return RoomManager.GetRoom(roomId).QuestionList;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+            _errorDisplayFlg = true;
+            return [];
+        }
+    }
+
+    private void HideError()
+    {
+        _errorDisplayFlg = false;
+    }
+
+    protected override void OnInitialized()
+    {
+        _questions = GetQuestions(ID);   
+    }
+
+}

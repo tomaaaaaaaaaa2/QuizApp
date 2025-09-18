@@ -1,0 +1,40 @@
+﻿@page "/rooms"
+@using QuizApp.Components.Logic
+@using QuizApp.Components.Model
+
+@inject RoomManager RoomManager
+
+<PageTitle>ルーム一覧</PageTitle>
+<h3>ルーム一覧</h3>
+
+
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th style="width: 50%">名前</th>
+            <th style="width: 50%">ID</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var room in _rooms)
+        {
+            <tr>
+                <td>
+                    <NavLink class="nav-link" href="@($"rooms/{room.ID}")">
+                        @room.RoomName
+                    </NavLink>
+                </td>   
+                <td>@room.ID</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Room> _rooms = new();
+
+    protected override void OnInitialized()
+    {
+        _rooms = RoomManager.Rooms;
+    }
+}

@@ -20,7 +20,16 @@ namespace QuizApp.Components.Logic
             NotifyStateChanged();
         }
 
-        private void NotifyStateChanged() => OnChange?.Invoke();
+        public Room GetRoom(string roomId)
+        {
+            if (!Rooms.Any(room => room.ID == roomId))
+            {
+                throw new Exception("指定されたルームは存在しません。");
+            }
 
+            return Rooms.First(room => room.ID == roomId);
+        }
+
+        private void NotifyStateChanged() => OnChange?.Invoke();
     }
 }
