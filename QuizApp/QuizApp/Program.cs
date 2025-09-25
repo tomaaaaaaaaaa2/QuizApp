@@ -1,4 +1,7 @@
+using MudBlazor.Services;
 using QuizApp.Components;
+using QuizApp.Components.Hubs;
+using QuizApp.Components.Logic;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -6,9 +9,14 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddSignalR();
-
-builder.Services.AddSingleton<QuizApp.Components.Logic.QuestionManager>();
-builder.Services.AddSingleton<QuizApp.Components.Logic.RoomManager>();
+builder.Services.AddMudServices();
+builder.Services.AddSingleton<QuestionManager>()
+    .AddSingleton<RoomManager>()
+    .AddSingleton<AnswerSubmissionService>()
+    .AddSingleton<LeaderBoardService>()
+    .AddSingleton<ILeaderBoardStore, InMemoryLeaderBoardStore>()
+    .AddSingleton<ILeaderBoardBroadcaster, LeaderBoardHub>()
+    ;
 
 WebApplication app = builder.Build();
 
@@ -25,7 +33,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
-app.MapHub<QuizApp.Components.Hubs.MessageHub>("/messagehub");
+app.MapHub<MessageHub>("/messagehub");
+app.MapHub<LeaderBoardHub>("/leaderboardhub");
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

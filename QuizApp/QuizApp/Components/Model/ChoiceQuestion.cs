@@ -6,5 +6,6 @@
 
         public List<string> Options { get; init; } = new();
         public int CorrectOptionIndex { get; init; }
+        public override string Answer => Options[CorrectOptionIndex];
     }
 }

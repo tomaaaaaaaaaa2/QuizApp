@@ -1,8 +1,12 @@
 ﻿@page "/rooms/{Id}"
+@rendermode InteractiveServer
 @using QuizApp.Components.Logic
 @using QuizApp.Components.Model
 
 @inject RoomManager RoomManager
+@inject AnswerSubmissionService AnswerSubmissionService
+@inject ILeaderBoardStore LeaderBoardStore
+
 
 <PageTitle>クイズルーム</PageTitle>
 <h3>クイズルーム</h3>
@@ -11,51 +15,67 @@
 
 <ErrorDialog IsVisible="@_errorDisplayFlg" Message="@_errorMessage" OnClose="@HideError" />
 
-<div class="mb-3">
-    <label class="form-label">ニックネームを入力してください</label>
-    <InputText class="form-control" @bind-Value="_nickName"></InputText>
-</div>
-
-<hr>
-
-<EditForm Model="@_questions">
-    @for(var i = 0; i < _questions.Count; i++)
-    {
-        var q = _questions[i];
+@switch(_step)
+{
+    case Step.InputNickName:
         <div class="mb-3">
-            <label class="form-label">Q@(i + 1). @q.Text</label>
-
-            @if (q.Type == QuestionType.Text)
-            {
-                <InputText class="form-control" @bind-Value="@_answerA"/>
-            }
-            else if (q.Type == QuestionType.Choice)
-            {
-                <InputSelect class="form-select" @bind-Value="@_answerB">
-                <option value=" ">---- 選択してください ----</option>
-                @foreach (var option in ((ChoiceQuestion)q).Options)
-                {
-                    <option value="@option">@option</option>
-                }
-                </InputSelect>
-            }
+            <label class="form-label">ニックネームを入力してください</label>
+            <InputText class="form-control" @bind-Value="_nickName"></InputText>
         </div>
-    }
-</EditForm>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="string.IsNullOrEmpty(_nickName)" OnClick="() => _step = Step.AnswerQuestion">次へ</MudButton>
+        break;
+    case Step.AnswerQuestion:
+            var q = _questions[_i];
+            <div class="mb-3">
+                <label class="form-label">Q@(_i + 1). @q.Question.Text</label>
+
+                @if (q.Question is TextQuestion tq)
+                {
+                    <InputText class="form-control" @bind-Value="q.Answer"/>
+                }
+                else if (q.Question is ChoiceQuestion cq)
+                {
+                    <InputSelect class="form-select" @bind-Value="q.Answer">
+                        <option value=" ">---- 選択してください ----</option>
+                        @foreach (var option in cq.Options)
+                        {
+                            <option value="@option">@option</option>
+                        }
+                    </InputSelect>
+                }
+            </div>
+        @if (_i != 0)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Default" OnClick="() => _i--">前へ</MudButton>
+        }
+        @if (_i != _questions.Count -1)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="async () => { await SubmitAsync(); _i++; }">次へ</MudButton>
+        }
+        @if (_i == _questions.Count - 1)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="async () => { await SubmitAsync(); _step = Step.Result;}">結果を見る</MudButton>
+        }
+        break;
+    case Step.Result:
+        <MudText Typo="Typo.body1">@_nickName さん、お疲れ様でした！</MudText>
+        <MudText Typo="Typo.body1">スコア @LeaderBoardStore.GetTotalScoreAsync(ID, _nickName, CancellationToken.None).Result / @_questions.Sum(it => it.Question.Score)</MudText>
+        break;
+}
+
 
 
 @code {
     [Parameter]
     public string ID { get; set; } = string.Empty;
+    private enum Step { InputNickName, AnswerQuestion, Result, }
+    private Step _step;
+    private int _i;
 
-    private List<Question> _questions = new();
+    private List<QuestionAndAnswer> _questions = new();
     private string _nickName = string.Empty;
     private bool _errorDisplayFlg = false;
     private string _errorMessage = string.Empty;
-    
-    //このままではNG: answerクラスのプロパティにバインドする必要あり
-    private string _answerA = string.Empty;
-    private string _answerB = string.Empty;
 
     private List<Question> GetQuestions(string roomId)
     {
@@ -78,7 +98,16 @@
 
     protected override void OnInitialized()
     {
-        _questions = GetQuestions(ID);   
+        _questions = GetQuestions(ID).Select(it => new QuestionAndAnswer(it)).ToList();
     }
 
+    private async Task SubmitAsync()
+    {
+        await AnswerSubmissionService.SubmitAsync(ID, _nickName, _questions[_i].Question, _questions[_i].Answer, CancellationToken.None).ConfigureAwait(true);
+    }
+
+    private record QuestionAndAnswer(Question Question)
+    {
+        public string Answer { get; set; } = string.Empty;
+    }
 }

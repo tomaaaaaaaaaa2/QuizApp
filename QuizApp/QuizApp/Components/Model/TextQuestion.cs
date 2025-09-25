@@ -4,5 +4,6 @@
     {
         public override QuestionType Type => QuestionType.Text;
         public string CorrectAnswer { get; init; }
+        public override string Answer => CorrectAnswer;
     }
 }
