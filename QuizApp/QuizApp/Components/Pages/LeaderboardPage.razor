@@ -1,0 +1,58 @@
+﻿@page "/leaderboardpage"
+@using QuizApp.Components.Model
+@using Microsoft.AspNetCore.SignalR.Client
+@rendermode InteractiveServer
+
+<h3>LeaderboardPage</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>プレイヤー名</th>
+            <th>得点</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var entry in _leaderboard)
+        {
+            <tr>
+                <td>@entry.PlayerName</td>
+                <td>@entry.Score</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+@code {
+    private List<LeaderboardEntry> _leaderboard = new();
+    private HubConnection? connection;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        connection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/leaderboardhub"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        connection.On<string, string, int>("ScoreUpdated", (roomId, playerName, totalScore) =>
+        {
+            var entry = _leaderboard.FirstOrDefault(x => x.PlayerName == playerName);
+            if(entry == null)
+            {
+                _leaderboard.Add(new LeaderboardEntry{PlayerName = playerName, Score = totalScore});
+            }
+            else
+            {
+                entry.Score = totalScore;
+            }
+
+            InvokeAsync(StateHasChanged); // UI更新
+        });
+
+        await connection.StartAsync();
+
+    }
+}
