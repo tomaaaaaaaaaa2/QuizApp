@@ -13,9 +13,9 @@ builder.Services.AddMudServices();
 builder.Services.AddSingleton<QuestionManager>()
     .AddSingleton<RoomManager>()
     .AddSingleton<AnswerSubmissionService>()
-    .AddSingleton<LeaderBoardService>()
+    //.AddSingleton<LeaderBoardService>()
     .AddSingleton<ILeaderBoardStore, InMemoryLeaderBoardStore>()
-    .AddSingleton<ILeaderBoardBroadcaster, LeaderBoardHub>()
+    .AddSingleton<ILeaderBoardBroadcaster, LeaderBoardService>()
     ;
 
 WebApplication app = builder.Build();
