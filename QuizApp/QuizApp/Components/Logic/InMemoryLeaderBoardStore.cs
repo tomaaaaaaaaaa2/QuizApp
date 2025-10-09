@@ -35,4 +35,16 @@ internal class InMemoryLeaderBoardStore : ILeaderBoardStore
             return Task.FromResult(_dic[roomId][playerName]);
         }
     }
+
+    public Task<List<string>> GetRegisteredNickNamesAsync(string roomId, CancellationToken token)
+    {
+        lock (_dic)
+        {
+            if (_dic.TryGetValue(roomId, out var roomScores))
+            {
+                return Task.FromResult(roomScores.Keys.ToList());
+            }
+            return Task.FromResult(new List<string>());
+        }
+    }
 }

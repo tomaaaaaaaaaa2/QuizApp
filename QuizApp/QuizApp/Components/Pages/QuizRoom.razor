@@ -22,28 +22,28 @@
             <label class="form-label">ニックネームを入力してください</label>
             <InputText class="form-control" @bind-Value="_nickName"></InputText>
         </div>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="string.IsNullOrEmpty(_nickName)" OnClick="() => _step = Step.AnswerQuestion">次へ</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="string.IsNullOrEmpty(_nickName)" OnClick="() => CheckNickname()">次へ</MudButton>
         break;
     case Step.AnswerQuestion:
-            var q = _questions[_i];
-            <div class="mb-3">
-                <label class="form-label">Q@(_i + 1). @q.Question.Text</label>
+        var q = _questions[_i];
+        <div class="mb-3">
+            <label class="form-label">Q@(_i + 1). @q.Question.Text</label>
 
-                @if (q.Question is TextQuestion tq)
-                {
-                    <InputText class="form-control" @bind-Value="q.Answer"/>
-                }
-                else if (q.Question is ChoiceQuestion cq)
-                {
-                    <InputSelect class="form-select" @bind-Value="q.Answer">
-                        <option value=" ">---- 選択してください ----</option>
-                        @foreach (var option in cq.Options)
-                        {
-                            <option value="@option">@option</option>
-                        }
-                    </InputSelect>
-                }
-            </div>
+            @if (q.Question is TextQuestion tq)
+            {
+                <InputText class="form-control" @bind-Value="q.Answer"/>
+            }
+            else if (q.Question is ChoiceQuestion cq)
+            {
+                <InputSelect class="form-select" @bind-Value="q.Answer">
+                    <option value=" ">---- 選択してください ----</option>
+                    @foreach (var option in cq.Options)
+                    {
+                        <option value="@option">@option</option>
+                    }
+                </InputSelect>
+            }
+        </div>
         @if (_i != 0)
         {
             <MudButton Variant="Variant.Filled" Color="Color.Default" OnClick="() => _i--">前へ</MudButton>
@@ -76,6 +76,7 @@
     private string _nickName = string.Empty;
     private bool _errorDisplayFlg = false;
     private string _errorMessage = string.Empty;
+    private List<string> _registerdName = new();
 
     private List<Question> GetQuestions(string roomId)
     {
@@ -96,8 +97,9 @@
         _errorDisplayFlg = false;
     }
 
-    protected override void OnInitialized()
+    protected override async void OnInitialized()
     {
+        _registerdName = await LeaderBoardStore.GetRegisteredNickNamesAsync(ID, CancellationToken.None);
         _questions = GetQuestions(ID).Select(it => new QuestionAndAnswer(it)).ToList();
     }
 
@@ -109,5 +111,16 @@
     private record QuestionAndAnswer(Question Question)
     {
         public string Answer { get; set; } = string.Empty;
+    }
+
+    private void CheckNickname()
+    {
+        if(_registerdName.Contains(_nickName))
+        {
+            _errorMessage = "既に登録されています．別のニックネームにしてね(⋈◍＞◡＜◍)。✧♡";
+            _errorDisplayFlg = true;
+            return;
+        }
+        _step = Step.AnswerQuestion;
     }
 }
