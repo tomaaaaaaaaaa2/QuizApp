@@ -144,19 +144,8 @@
     {
         Question newQuestion = _questionType switch
         {
-            QuestionType.Choice => new ChoiceQuestion
-            {
-                Text = _questionText,
-                Score = _score,
-                CorrectOptionIndex = _correctIndex,
-                Options = _choice
-            },
-            QuestionType.Text => new TextQuestion
-            {
-                Text = _questionText,
-                Score = _score,
-                CorrectAnswer = _correctText
-            },
+            QuestionType.Choice => QuestionCreator.CreateQuestion(new QuizStruct(_questionText, _score, _questionType, _correctIndex.ToString(),_choice)),
+            QuestionType.Text => QuestionCreator.CreateQuestion(new QuizStruct(_questionText, _score, _questionType, _correctText)),
             _ => throw new InvalidOperationException("不明な質問タイプです。")
         };
 
